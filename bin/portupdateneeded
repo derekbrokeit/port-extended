@@ -1,0 +1,32 @@
+#!/bin/bash
+# portupdateneeded
+# this prints an error message if port is more than X days out of date
+
+PUP_FILE="$HOME/.port.updated"
+
+# the updated listing is not found, therefore no update known
+if [[ ! -f $PUP_FILE ]] ; then 
+  ! echo -e "${ERROR_RED}*** port has no recorded recent updates${NC}"
+  return
+fi
+
+# find out how many days to check for update window 
+# default is 3
+checkdays=$1
+if [[ -z $checkdays ]] ; then
+  checkdays=3
+fi
+
+now=$(date +%s)
+timestamp=$(head -1 $PUP_FILE | awk '{print $2}')
+
+# get the difference in seconds and convert to days
+timediff=$(($now - $timestamp))
+timediff=$(($timediff / 60 / 60 / 24))
+
+# print output if port is out of date by a day
+if [[ $timediff -ge $checkdays ]] ; then
+  ! echo -e "${ERROR_RED}*** port hasn't been updated in $timediff days${NC}"
+fi
+
+
