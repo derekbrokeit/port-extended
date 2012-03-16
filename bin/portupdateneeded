@@ -7,7 +7,7 @@ PUP_FILE="$HOME/.port.updated"
 # the updated listing is not found, therefore no update known
 if [[ ! -f $PUP_FILE ]] ; then 
   ! echo -e "${ERROR_RED}*** port has no recorded recent updates${NC}"
-  return
+  exit
 fi
 
 # find out how many days to check for update window 
