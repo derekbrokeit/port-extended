@@ -173,7 +173,7 @@ function installNew() {
               printf  "    [ %1s ]: %-10s > %s\n" '?' "options"  "print these descriptions of available user input"
               ;;
             * )
-               echo -e "${ERROR_RED}*** Please answer yes, no, detail, info, or variants${NC}" ;;
+               echo -e "${ERROR_RED}*** Please answer yes, no, detail, info, variants, or custom${NC}" ;;
           esac
         done
         IFS=$OLDIFS
