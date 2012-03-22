@@ -14,8 +14,23 @@ source $HOME/.colors
 # update fink and then update all fink packages
 # setting the terminal title
 
+# setup safe exit
+# also change TERM so that title printing is allowed
+trap 'killListener' EXIT
+OLD_TERM=$TERM
+function killListener() {
+  export TERM=$OLD_TERM
+}
+TERM_POSTFIX=${TERM#*-}
+if [[ "x$TERM_POSTFIX" == "x" ]] ; then
+  TERM_POSTFIX=
+else
+  TERM_POSTFIX="-$TERM_POSTFIX"
+fi
+export TERM="xterm$TERM_POSTFIX"
+
 # edit title temporarily
-PREFIX="${HOSTNAME%.*} > portupdate: "
+PREFIX="${HOSTNAME%.*}: portupdate > "
 function changeTitle() {
    printf "\033]2;${PREFIX}$@\033\\"
 }
@@ -77,7 +92,7 @@ function installNew() {
 
    # make sure the list of shared ports does not file recently upgrade ports
    standardPorts="$(mktemp /tmp/.$(basename $0).standard.XXX)"
-   cat ${LOGS_DIR}/port > $standardPorts
+   cat ${LOGS_DIR}/port | sort > $standardPorts
    while read line ; do
      cat $standardPorts > $tmp
      sed "/$(echo ${line} | awk '{print $1}')/d" $tmp | sort > $standardPorts

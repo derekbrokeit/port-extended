@@ -1,6 +1,23 @@
 #!/bin/bash
 # pup
 
+# setup safe exit
+# also change TERM so that title printing is allowed
+trap 'killListener' EXIT
+OLD_TERM=$TERM
+function killListener() {
+  echo "cleaning up TERM=$OLD_TERM"
+  export TERM=$OLD_TERM
+}
+TERM_POSTFIX=${TERM#*-}
+if [[ "x$TERM_POSTFIX" == "x" ]] ; then
+  TERM_POSTFIX=
+else
+  TERM_POSTFIX="-$TERM_POSTFIX"
+fi
+export TERM="xterm$TERM_POSTFIX"
+
+# output file
 PUP_FILE="$HOME/.port.updated"
 
 # tmwin: open a titled window in a tmux socket
@@ -19,7 +36,6 @@ else
   $exe
 fi
 }
-
 # updated desired, so remove the latest update file
 rm -f $PUP_FILE* &> /dev/null 
 
