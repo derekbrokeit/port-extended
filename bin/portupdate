@@ -16,18 +16,6 @@ source $HOME/.colors
 
 # setup safe exit
 # also change TERM so that title printing is allowed
-trap 'killListener' EXIT
-OLD_TERM=$TERM
-function killListener() {
-  export TERM=$OLD_TERM
-}
-TERM_POSTFIX=${TERM#*-}
-if [[ "x$TERM_POSTFIX" == "x" ]] ; then
-  TERM_POSTFIX=
-else
-  TERM_POSTFIX="-$TERM_POSTFIX"
-fi
-export TERM="xterm$TERM_POSTFIX"
 
 # edit title temporarily
 PREFIX="${HOSTNAME%.*}: portupdate > "
