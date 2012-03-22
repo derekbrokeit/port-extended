@@ -106,6 +106,7 @@ function installNew() {
       IFS=$'\n'
       for package in $(cat $extraInstall)
       do
+          
         activeInst=$(port installed $(echo $package | awk '{print $1}') | grep "(active)" | awk '{print $1,$2}')
         if [[ "$package" == "$olderPack" ]] ; then
           # The package has since been installed
@@ -113,6 +114,13 @@ function installNew() {
         fi
 
         let i++
+
+        if [[ $(port installed $package) ==  *"(active)"* ]]
+        then
+          # the package is actually installed AND is active
+          queueStr=$(printf "${YELLOW}%2d:${NC} ${magenta}Skipping: %-15s %s (already active)${NC}" $i "$(echo $activeInst | awk '{print $1}')" "$(echo $activeInst | awk '{print $2}')"  )
+          continue
+        fi
         
         if [[ -n "$activeInst" ]] ; then
           queueStr=$(printf "${YELLOW}%2d:${NC} ${GREEN}Swap:${NC} %-15s %s ${CYAN}-->${NC} %s ${YELLOW}?${NC}" $i "$(echo $activeInst | awk '{print $1}')" "$(echo $activeInst | awk '{print $2}')" "$(echo $package | awk '{print $2}')") 
