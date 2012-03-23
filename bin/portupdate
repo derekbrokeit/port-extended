@@ -118,7 +118,7 @@ function installNew() {
         if [[ $(port installed $package) ==  *"(active)"* ]]
         then
           # the package is actually installed AND is active
-          queueStr=$(printf "${YELLOW}%2d:${NC} ${magenta}Skipping: %-15s %s (already active)${NC}" $i "$(echo $activeInst | awk '{print $1}')" "$(echo $activeInst | awk '{print $2}')"  )
+          queueStr=$(printf "${YELLOW}%2d:${NC} ${magenta}Skipping: %s (already active)${NC}" $i "package")
           continue
         fi
         
