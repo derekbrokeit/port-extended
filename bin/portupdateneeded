@@ -2,6 +2,9 @@
 # portupdateneeded
 # this prints an error message if port is more than X days out of date
 
+# load colors
+. $HOME/.colors
+
 PUP_FILE="$HOME/.port.updated"
 
 # the updated listing is not found, therefore no update known
