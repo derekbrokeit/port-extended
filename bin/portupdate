@@ -102,6 +102,10 @@ function installNew() {
       i=0
       isErr=0
 
+      # if this variable is 1, then all ports are installed as found previously
+      check_all=0
+      err_quit=0
+
       OLDIFS=$IFS
       IFS=$'\n'
       for package in $(cat $extraInstall)
@@ -125,8 +129,17 @@ function installNew() {
         fi
 
         while true; do
-          read -p "$queueStr "$(printf "${YELLOW}(y/n/d/i/v/c/?)${NC}")" " yn
+          if [[ $check_all -eq 0 ]] ; then 
+            read -p "$queueStr "$(printf "${YELLOW}(y/n/d/i/v/c/?)${NC}")" " yn
+          else
+            yn="Y"
+          fi
+
           case $yn in
+            [Aa]* )
+              check_all=1
+              err_quit=1
+               ;;
             [Yy]* ) 
                changeTitle "install: $package" 
                # awk is used to merge the package into a single word for port to work
@@ -160,6 +173,7 @@ function installNew() {
               { port install $app $inst && break ; } || { echo -e "${ERROR_RED}*** error code: $?${NC}" ; }
               ;;
             [?]* )
+              printf  "    [ %1s ]: %-10s > %s\n" "a" "all-yes"  "install ALL of the new programs/applications"
               printf  "    [ %1s ]: %-10s > %s\n" "y" "yes"      "install the program/application"
               printf  "    [ %1s ]: %-10s > %s\n" "n" "no"       "do NOT install"
               printf  "    [ %1s ]: %-10s > %s\n" "d" "detail"   "install the program with detailed install output"
@@ -174,11 +188,13 @@ function installNew() {
         done
         IFS=$OLDIFS
 
-        if [[ $isErr -gt 0 ]] ; then
+        if [[ $isErr -gt 0 && $err_quit -eq 0 ]] ; then
+          # if the last install was an error AND we want to stop on errors, leave the installation loop
           break
         fi
 
       done
+
    else
       echo -e "${BLUE}** portupdate: nothing new to install${NC}"
       isErr=0
