@@ -2,13 +2,17 @@
 
 Copyright 2011 Derek Ashley Thomas
 
-A series of shell scripts are included here to simplify and extend the
-capabilities of macports. My writing of these scripts was motivated by
-my strong need to keep my ports synced between devices. It also came
-in handy when I upgraded my machine to mountain lion and decided to
-install all of the ports from nothing. If there are any bugs, comments,
-or suggestions feel free to let me know. Also, you can fork and do with
-these scripts as you please in accordance with the licence.
+A series of shell scripts are included here to simplify and extend
+the capabilities of macports. Macports is an easy to use system
+for distributing, compiling, and installing open source software.
+[Macports.org](http://www.macports.org/index.php)
+
+My writing of these scripts was motivated by my strong need to keep my
+ports synced between devices. It also came in handy when I upgraded my
+machine to mountain lion and decided to install all of the ports from
+nothing. If there are any bugs, comments, or suggestions feel free to
+let me know. Also, you can fork and do with these scripts as you please
+in accordance with the licence.
 
 The scripts here rely on an environment variable `$LOGS_DIR`, which is
 a convenient location to store your shared list of ports. I place this
