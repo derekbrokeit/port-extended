@@ -232,9 +232,10 @@ function installNew() {
   echo -n "timestamp: "
   date +%s
 
+  # print some license info
   # print title
   LOGS_DIR="/Users/derekt/Dropbox/serverLogs"
-  echo -e "${BLUE}portupdate: ${WHITE}$(date)${NC}"
+  echo -e "${BLUE}portupdate: ${WHITE}$(date) [Copyright 2011 Derek Ashley Thomas]${NC}"
 
   ## check if sudo
   id=$(id -u)
