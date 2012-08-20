@@ -7,7 +7,13 @@ PUP_FILE="$HOME/.port.updated"
 # updated desired, so remove the latest update file
 rm -f $PUP_FILE* &> /dev/null 
 
-tmwin portupdate 'sudo hili portupdate'" $PUP_FILE" 
+# attempt to run in a tmux server
+if [[ -x tmwin ]] ; then
+    tmwin portupdate 'sudo hili portupdate'" $PUP_FILE" 
+else
+    portupdate 'sudo hili portupdate'" $PUP_FILE" 
+fi
+
 if [[ -e ${PUP_FILE}.exit ]] ; then
   #update completed successfully
 
