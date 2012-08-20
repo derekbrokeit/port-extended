@@ -15,10 +15,10 @@ let me know. Also, you can fork and do with these scripts as you please
 in accordance with the licence.
 
 The scripts here rely on an environment variable `$LOGS_DIR`, which is
-a convenient location to store your shared list of ports. I place this
-file in Dropbox, but you can choose any syncing system that you prefere.
-My only suggestion to the user is that this be a folder that auto syncs
-without your input (try iCloud+GoodReader as an alternative).
+a convenient location to store your shared list of ports. I chose a
+subdirectory in Dropbox, but you can choose any syncing system that you
+prefere. My only suggestion to the user is that this be a folder that
+auto syncs without your input (try iCloud+GoodReader as an alternative).
 
 The following are the included scripts:
 
