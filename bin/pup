@@ -26,10 +26,10 @@ PUP_FILE="$HOME/.port.updated"
 rm -f $PUP_FILE* &> /dev/null 
 
 # attempt to run in a tmux server
-if [[ -x tmwin ]] ; then
-    tmwin portupdate 'sudo hili portupdate'" $PUP_FILE" 
+if [[ -x $(which tmwin) ]] ; then
+    tmwin portupdate 'sudo portupdate'" $PUP_FILE" 
 else
-    portupdate 'sudo hili portupdate'" $PUP_FILE" 
+    sudo portupdate $PUP_FILE
 fi
 
 if [[ -e ${PUP_FILE}.exit ]] ; then
