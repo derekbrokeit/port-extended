@@ -1,0 +1,79 @@
+#port-extended
+
+Copyright 2011 Derek Ashley Thomas
+
+A series of shell scripts are included here to simplify and extend the
+capabilities of macports. My writing of these scripts was motivated by
+my strong need to keep my ports synced between devices. It also came
+in handy when I upgraded my machine to mountain lion and decided to
+install all of the ports from nothing. If there are any bugs, comments,
+or suggestions feel free to let me know. Also, you can fork and do with
+these scripts as you please in accordance with the licence.
+
+The scripts here rely on an environment variable `$LOGS_DIR`, which is
+a convenient location to store your shared list of ports. I place this
+file in Dropbox, but you can choose any syncing system that you prefere.
+My only suggestion to the user is that this be a folder that auto syncs
+without your input (try iCloud+GoodReader as an alternative).
+
+The following are the included scripts:
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+
+## pup
+
+It runs the `portupdate` script with administrative priviledges (usually
+macports requires super-user abilities). script and keeps a general file
+in `$HOME/.port.updated` that can be viewed later to see the results of
+the update. If my tmux scripts are present it also runs the entire thing
+in a attachable/detachable tmux socket.
+
+## portupdate
+
+This first performs a `port selfupdate`, then it updates outdated ports,
+and finally attempts to install new ports that have been installed
+on another machine. This script typically requires administrative
+priviledges unless port was installed in the home directory. If you run
+`pup` you will not need to run `portupdate`. Upon successful completion,
+`portupdate` creates a file `$LOGS_DIR/port` that lists all of the
+active, installed ports.
+
+When a list of ports that are not currently installed on the active
+computer is found, the user is presented with several options. It tells
+you the port version/variants currently installed and which one is
+installed on the most recently `pup`ed machine. Then you can request
+to install or not install, install with debugger info, `port info`,
+`port variants`, custom variants, or even install all the listed ports.
+Whenever an error occurs, `portupdate` hangs and stops there so that
+the user can tell where a problem is. However, if the "install all"
+option is selected, all ports are attempted and errors will not halt the
+script.
+
+These are very simple in functions. They are meant to help keep port
+cleanly updated among multiple computers. The script, as it is written
+now, assumes that all ports should be synced among all computers.
+
+## portupdateneeded
+
+If you run `pup` the log file generated in the home directory contains a timestamp. This script reads that timestamp and determines how many days have passed since the last full update. A warning is printed if the update occured more than the specified number of days (default 3 days). You can specify the cutoff like so:
+
+    $ portupdate 5 # 5 day cutoff
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+
+## Licence
+
+This file is part of port-extended.
+
+port-extended is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+port-extended is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with port-extended.  If not, see <http://www.gnu.org/licenses/>.
