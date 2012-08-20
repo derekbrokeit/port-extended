@@ -68,6 +68,7 @@ If you run `pup` the log file generated in the home directory contains a timesta
 ## Licence
 
 Copyright 2011 Derek Ashley Thomas
+
 This file is part of port-extended.
 
 port-extended is free software: you can redistribute it and/or modify
