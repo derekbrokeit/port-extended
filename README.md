@@ -26,52 +26,55 @@ The following are the included scripts:
 
 ## pup
 
-It runs the `portupdate` script with administrative privileges (usually
-macports requires super-user abilities). A log file is generated in
-`$HOME/.port.updated` that can be viewed later to see the results of the
-update. If my [tmux scripts](git@github.com:scicalculator/tmux-tmx.git)
-are present it runs the entire process in a attachable/detachable tmux
-socket.
-
-## portupdate
-
 This first performs a `port selfupdate`, then it updates outdated ports,
 and finally attempts to install new ports that have been installed
 on another machine. This script typically requires administrative
-privileges unless port was installed in the home directory. If you run
-`pup` you will not need to run `portupdate` separately. Upon successful
-completion, `portupdate` creates a file `$LOGS_DIR/port` that lists all
-of the active, installed ports.
+privileges unless port was installed in the home directory. To run from
+the commandline this means you should use the command:
 
-When a list of ports that are not currently installed on the active
-computer is found, the user is presented with several options. It tells
-you which port version/variants are currently installed and which one is
-installed on the most recently updated machine. Then you can request
-to install or not install, install with debugger info, `port info`,
-`port variants`, custom variants, or even install all the listed ports.
+    sudo pup
+    
+Upon successful completion, `portupdate` creates a file `$LOGS_DIR/port`
+that lists all of the active, installed ports.
 
-Whenever an error occurs, `portupdate` hangs and stops there so that
-the user can tell where a problem is. However, if the "install all"
-option is selected, all ports are attempted and errors will not halt the
-script.
+After updating, it checks if some expected ports are installed (perhaps
+your other machine has them). When this is found, the user is presented
+with several options. It tells you which port version/variants are
+currently installed and which one is installed on the most recently
+updated machine. Then you can request to install or not install, install
+with debugger info, `port info`, `port variants`, custom variants, or
+even install all the listed ports without any more questions.
+
+Whenever an error occurs, `portupdate` stops so that the user can tell
+where a problem is. However, if the "install all" option is selected,
+all ports are attempted and errors will not halt the script.
 
 These are very simple functions. They are meant to help keep port
 cleanly updated among multiple computers. The script, as it is written
 now, assumes that all ports should be synced among all computers. 
 
-## portupdateneeded
+## pup-needed
 
-If you run `pup` the log file generated in the home directory contains
-a time stamp. This script reads that time stamp and determines how many
-days have passed since the last full update. A warning is printed if the
-update occurred more than the specified number of days ago (default 3 days).
-You can specify the cutoff like so:
+If you run `pup` a log file is generated in the home directory contains
+a time stamp of the last successful update. This script reads that
+time stamp and determines how many days have passed since the last
+full update. A warning is printed if the update occurred more than the
+specified number of days ago (default 3 days). You can specify the
+cutoff like so:
 
-    $ portupdate 5 # 5 day cutoff
+    # 5 day cutoff
+    pup-needed 5 
+
+I have this in my `${SHELL}rc` file (e.g. `.zshrc`) to let me know if my ports get too out of date.
+
+    # check if port needs an update (3 days outdated)
+    pup-needed 3
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 
 ## License
+
+GPL 3
 
 Copyright 2011 Derek Ashley Thomas
 
