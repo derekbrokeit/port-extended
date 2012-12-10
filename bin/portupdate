@@ -18,16 +18,21 @@
 # You should have received a copy of the GNU General Public License
 # along with port-extended.  If not, see <http://www.gnu.org/licenses/>.
 #--------------------
-      
+
 # update file
-updateFile=$1
+update_file=$1
 shift 1
-if [[ -z $updateFile ]] ; then
-  updateFile=$HOME/.port.updated
+if [[ -z $update_file ]] ; then
+    update_file=$HOME/.port.updated
+fi
+if [[ ! -n $LOGS_DIR ]] ; then
+    LOGS_DIR="${HOME}/Dropbox/serverLogs"
 fi
 
 # make sure we can print colors
-source $HOME/.colors
+if [[ -f $HOME/.colors ]] ;  then
+    source $HOME/.colors
+fi
 
 # -- Functions --
 # update fink and then update all fink packages
@@ -39,232 +44,234 @@ source $HOME/.colors
 # edit title temporarily
 PREFIX="${HOSTNAME%.*}: portupdate > "
 function changeTitle() {
-   printf "\033]2;${PREFIX}$@\033\\"
+printf "\033]2;${PREFIX}$@\033\\"
 }
 
 ## necessary
 #function installedList() { 
-    #port installed active | sed '1d' | awk '{ print $1,$2}' | tr '[:upper:]' '[:lower:]'
+#port installed active | sed '1d' | awk '{ print $1,$2}' | tr '[:upper:]' '[:lower:]'
 #}
 function portsList() { 
-    port $@ | sed '1d' | awk '{ print $1,$2}' | tr '[:upper:]' '[:lower:]'
+port $@ | sed '1d' | awk '{ print $1,$2}' | tr '[:upper:]' '[:lower:]'
 }
 
 function selfupdate(){
-   # first, update port
-   changeTitle "selfupdate"
-   echo -e "${BLUE}** portupdate: port selfupdate${NC}"
-   port selfupdate
+# first, update port
+changeTitle "selfupdate"
+echo -e "${BLUE}** portupdate: port selfupdate${NC}"
+port selfupdate
 }
 
 function updateOld() {
-   # second, upgrade outdated files
-   changeTitle "upgrade outdated"
-   echo -e "${BLUE}** portupdate: port upgrade outdated${NC}"
-   list=$(port outdated | sed '1d' | awk '{print $1}' )
-   port outdated | sed "1d;s/^/ -\ /"
+# second, upgrade outdated files
+changeTitle "upgrade outdated"
+echo -e "${BLUE}** portupdate: port upgrade outdated${NC}"
+list=$(port outdated | sed '1d' | awk '{print $1}' )
+port outdated | sed "1d;s/^/ -\ /"
 
-   # keep a detailed list of versioned/variants of upgraded ports
-   upgradedPorts="$(mktemp /tmp/.$(basename $0).upgrade.XXX)"
-   portsList outdated > $upgradedPorts
-   #cat $upgradedPorts | sed "s/^/ -\ /"
+# keep a detailed list of versioned/variants of upgraded ports
+upgradedPorts="$(mktemp /tmp/.$(basename $0).upgrade.XXX)"
+portsList outdated > $upgradedPorts
+#cat $upgradedPorts | sed "s/^/ -\ /"
 
-   isErr=0
-   for prog in $list
-   do
-      changeTitle "upgrade outdated: $prog"
-      echo -e "${CYAN}<---  $prog  --->${NC}"
-      port upgrade $prog
-      isErr=$?
-      if [[ $isErr -gt 0 ]] ; then
+isErr=0
+for prog in $list
+do
+    changeTitle "upgrade outdated: $prog"
+    echo -e "${CYAN}<---  $prog  --->${NC}"
+    port upgrade $prog
+    isErr=$?
+    if [[ $isErr -gt 0 ]] ; then
         break
-      fi
-   done
-   if [[ $isErr -gt 0 ]] ; then
-     ! echo -e "${ERROR_RED}*** Error: installNew > $package"
-   fi
+    fi
+done
+if [[ $isErr -gt 0 ]] ; then
+    ! echo -e "${ERROR_RED}*** Error: installNew > $package"
+fi
 }
 
 function installNew() {
-   # make a list of all currently installed fink packages
-   localInstall="$(mktemp /tmp/.$(basename $0).packages.XXX)"
-   #installedList > $localInstall
-   portsList installed active | sort > $localInstall
-   # exclude recently upgraded ports from this list
+# make a list of all currently installed fink packages
+localInstall="$(mktemp /tmp/.$(basename $0).packages.XXX)"
+#installedList > $localInstall
+portsList installed active | sort > $localInstall
+# exclude recently upgraded ports from this list
 
-   # probably not important as you only care what the port list file contains, not localInstall
-   tmp=$(mktemp /tmp/.$(basename $0).tmp.XXX)
-   #comm -13 $upgradedPorts $localInstall > $tmp
-   #cat $tmp > $localInstall
+# probably not important as you only care what the port list file contains, not localInstall
+tmp=$(mktemp /tmp/.$(basename $0).tmp.XXX)
+#comm -13 $upgradedPorts $localInstall > $tmp
+#cat $tmp > $localInstall
 
-   # make sure the list of shared ports does not file recently upgrade ports
-   standardPorts="$(mktemp /tmp/.$(basename $0).standard.XXX)"
-   cat ${LOGS_DIR}/port | sort > $standardPorts
-   while read line ; do
-     cat $standardPorts > $tmp
-     sed "/$(echo ${line} | awk '{print $1}')/d" $tmp | sort > $standardPorts
-   done < $upgradedPorts
+# make sure the list of shared ports does not file recently upgrade ports
+standardPorts="$(mktemp /tmp/.$(basename $0).standard.XXX)"
+cat ${LOGS_DIR}/port | sort > $standardPorts
+while read line ; do
+    cat $standardPorts > $tmp
+    sed "/$(echo ${line} | awk '{print $1}')/d" $tmp | sort > $standardPorts
+done < $upgradedPorts
 
-   # does the server log have any extra packages that aren't local?
-   extraInstall="$(mktemp /tmp/.$(basename $0).extras.XXX)"
-   #comm -23  ${LOGS_DIR}/port $localInstall > $extraInstall
-   comm -23  $standardPorts $localInstall > $extraInstall
+# does the server log have any extra packages that aren't local?
+extraInstall="$(mktemp /tmp/.$(basename $0).extras.XXX)"
+#comm -23  ${LOGS_DIR}/port $localInstall > $extraInstall
+comm -23  $standardPorts $localInstall > $extraInstall
 
-   # if ther server log has any extra packages, make sure to install them
-   if [ "x$(cat $extraInstall)" != "x" ] ; then
-   #if [[ 1 -eq 1 ]] ; then
-      echo -e "${BLUE}** portupdate: installing extra packages${NC}"
-      #echo "**** list: "$(sed -e :a -e '$!N;s/\n/\ /;ta' $extraInstall)
-      echo "**** list:"
-      cat $extraInstall | sed "s/^/ -\ /"  
+# if ther server log has any extra packages, make sure to install them
+if [ "x$(cat $extraInstall)" != "x" ] ; then
+    #if [[ 1 -eq 1 ]] ; then
+    echo -e "${BLUE}** portupdate: installing extra packages${NC}"
+    #echo "**** list: "$(sed -e :a -e '$!N;s/\n/\ /;ta' $extraInstall)
+    echo "**** list:"
+    cat $extraInstall | sed "s/^/ -\ /"  
 
-      i=0
-      isErr=0
+    i=0
+    isErr=0
 
-      # if this variable is 1, then all ports are installed as found previously
-      check_all=0
-      err_quit=0
+    # if this variable is 1, then all ports are installed as found previously
+    check_all=0
+    err_quit=0
 
-      OLDIFS=$IFS
-      IFS=$'\n'
-      for package in $(cat $extraInstall)
-      do
-          
+    OLDIFS=$IFS
+    IFS=$'\n'
+    for package in $(cat $extraInstall)
+    do
+
         activeInst=$(port installed $(echo $package | awk '{print $1}') | grep "(active)" | awk '{print $1,$2}')
 
         let i++
 
         if [[ $(port installed $package) ==  *"(active)"* ]]
         then
-          # the package is actually installed AND is active
-          printf "${YELLOW}%2d: ${GREEN}Skipping: ${MAGENTA_BRIGHT}%s (already active)${NC}\n" $i "$package"
-          continue
+            # the package is actually installed AND is active
+            printf "${YELLOW}%2d: ${GREEN}Skipping: ${MAGENTA_BRIGHT}%s (already active)${NC}\n" $i "$package"
+            continue
         fi
-        
+
         if [[ -n "$activeInst" ]] ; then
-          queueStr=$(printf "${YELLOW}%2d: ${GREEN}Swap:${NC} %-15s %s ${CYAN}-->${NC} %s ${YELLOW}?${NC}" $i "$(echo $activeInst | awk '{print $1}')" "$(echo $activeInst | awk '{print $2}')" "$(echo $package | awk '{print $2}')") 
+            queueStr=$(printf "${YELLOW}%2d: ${GREEN}Swap:${NC} %-15s %s ${CYAN}-->${NC} %s ${YELLOW}?${NC}" $i "$(echo $activeInst | awk '{print $1}')" "$(echo $activeInst | awk '{print $2}')" "$(echo $package | awk '{print $2}')") 
         else
-          queueStr=$(printf "${YELLOW}%2d: ${GREEN}Install:${NC} %s ${YELLOW}?${NC}" $i "$package") 
+            queueStr=$(printf "${YELLOW}%2d: ${GREEN}Install:${NC} %s ${YELLOW}?${NC}" $i "$package") 
         fi
 
         while true; do
-          if [[ $check_all -eq 0 ]] ; then 
-            read -p "$queueStr "$(printf "${YELLOW}(y/n/d/i/v/c/?)${NC}")" " yn
-          else
-            yn="Y"
-          fi
+            if [[ $check_all -eq 0 ]] ; then 
+                read -p "$queueStr "$(printf "${YELLOW}(y/n/d/i/v/c/?)${NC}")" " yn
+            else
+                yn="Y"
+            fi
 
-          case $yn in
-            [Aa]* )
-              check_all=1
-              err_quit=1
-               ;;
-            [Yy]* ) 
-               changeTitle "install: $package" 
-               # awk is used to merge the package into a single word for port to work
-               pp=$(echo $package | awk '{print $1$2}')
-               echo -e "${CYAN}<---  port install $pp  --->${NC}"
-               port install $pp
-               isErr=$?
-               break
-               ;;
-            [Nn]* ) 
-               break ;;
-            [Dd]* )
-               changeTitle "install: $package" 
-               # awk is used to merge the package into a single word for port to work
-               pp=$(echo $package | awk '{print $1$2}')
-               echo -e "${CYAN}<---  port install $pp  --->${NC}"
-               port -d install $pp
-               isErr=$?
-               break
-               ;;
-            [Ii]* )
-              port info $(echo $package | awk '{print $1}') ;;
-            [Vv]* )
-              port variants $(echo $package | awk '{print $1}') ;;
-            [Cc]* )
-              str=$(printf "${YELLOW}--->  Custom variants: ${NC}")
-              read -p "$str" inst
-           
-              app=$(echo $package | awk '{print $1}')
-              echo -e "${CYAN}<---  $app $inst  --->${NC}"
-              { port install $app $inst && break ; } || { echo -e "${ERROR_RED}*** error code: $?${NC}" ; }
-              ;;
-            [?]* )
-              printf  "    [ %1s ]: %-10s > %s\n" "a" "all-yes"  "install ALL of the new programs/applications"
-              printf  "    [ %1s ]: %-10s > %s\n" "y" "yes"      "install the program/application"
-              printf  "    [ %1s ]: %-10s > %s\n" "n" "no"       "do NOT install"
-              printf  "    [ %1s ]: %-10s > %s\n" "d" "detail"   "install the program with detailed install output"
-              printf  "    [ %1s ]: %-10s > %s\n" "i" "info"     "print the info/notes about the program/application"
-              printf  "    [ %1s ]: %-10s > %s\n" "v" "variants" "prints information about the possible variants available"
-              printf  "    [ %1s ]: %-10s > %s\n" "c" "custom"   "create a new custom set of variants for installation"
-              printf  "    [ %1s ]: %-10s > %s\n" '?' "options"  "print these descriptions of available user input"
-              ;;
-            * )
-               echo -e "${ERROR_RED}*** Please answer yes, no, detail, info, variants, or custom${NC}" ;;
-          esac
+            case $yn in
+                [Aa]* )
+                    check_all=1
+                    err_quit=1
+                    ;;
+                [Yy]* ) 
+                    changeTitle "install: $package" 
+                    # awk is used to merge the package into a single word for port to work
+                    pp=$(echo $package | awk '{print $1$2}')
+                    echo -e "${CYAN}<---  port install $pp  --->${NC}"
+                    port install $pp
+                    isErr=$?
+                    break
+                    ;;
+                [Nn]* ) 
+                    break ;;
+                [Dd]* )
+                    changeTitle "install: $package" 
+                    # awk is used to merge the package into a single word for port to work
+                    pp=$(echo $package | awk '{print $1$2}')
+                    echo -e "${CYAN}<---  port install $pp  --->${NC}"
+                    port -d install $pp
+                    isErr=$?
+                    break
+                    ;;
+                [Ii]* )
+                    port info $(echo $package | awk '{print $1}') ;;
+                [Vv]* )
+                    port variants $(echo $package | awk '{print $1}') ;;
+                [Cc]* )
+                    str=$(printf "${YELLOW}--->  Custom variants: ${NC}")
+                    read -p "$str" inst
+
+                    app=$(echo $package | awk '{print $1}')
+                    echo -e "${CYAN}<---  $app $inst  --->${NC}"
+                    { port install $app $inst && break ; } || { echo -e "${ERROR_RED}*** error code: $?${NC}" ; }
+                    ;;
+                [?]* )
+                    printf  "    [ %1s ]: %-10s > %s\n" "a" "all-yes"  "install ALL of the new programs/applications"
+                    printf  "    [ %1s ]: %-10s > %s\n" "y" "yes"      "install the program/application"
+                    printf  "    [ %1s ]: %-10s > %s\n" "n" "no"       "do NOT install"
+                    printf  "    [ %1s ]: %-10s > %s\n" "d" "detail"   "install the program with detailed install output"
+                    printf  "    [ %1s ]: %-10s > %s\n" "i" "info"     "print the info/notes about the program/application"
+                    printf  "    [ %1s ]: %-10s > %s\n" "v" "variants" "prints information about the possible variants available"
+                    printf  "    [ %1s ]: %-10s > %s\n" "c" "custom"   "create a new custom set of variants for installation"
+                    printf  "    [ %1s ]: %-10s > %s\n" '?' "options"  "print these descriptions of available user input"
+                    ;;
+                * )
+                    echo -e "${ERROR_RED}*** Please answer yes, no, detail, info, variants, or custom${NC}" ;;
+            esac
         done
         IFS=$OLDIFS
 
         if [[ $isErr -gt 0 && $err_quit -eq 0 ]] ; then
-          # if the last install was an error AND we want to stop on errors, leave the installation loop
-          break
+            # if the last install was an error AND we want to stop on errors, leave the installation loop
+            break
         fi
 
-      done
+    done
 
-   else
-      echo -e "${BLUE}** portupdate: nothing new to install${NC}"
-      isErr=0
-   fi
-   rm $localInstall $extraInstall
+else
+    echo -e "${BLUE}** portupdate: nothing new to install${NC}"
+    isErr=0
+fi
+rm $localInstall $extraInstall
 
-   if [[ $isErr -gt 0 ]] ; then
-     ! echo -e "${ERROR_RED}*** Error: installNew > $package"
-   fi
-   
+if [[ $isErr -gt 0 ]] ; then
+    ! echo -e "${ERROR_RED}*** Error: installNew > $package"
+fi
+
 }
 
 # -- Run --
 {
-  # first apply timestamp
-  echo -n "timestamp: "
-  date +%s
+    # first apply timestamp
+    echo -n "timestamp: "
+    date +%s
 
-  # print some license info
-  # print title
-  LOGS_DIR="/Users/derekt/Dropbox/serverLogs"
-  echo -e "${BLUE}portupdate: ${WHITE}$(date) [Copyright 2011 Derek Ashley Thomas]${NC}"
+    # print some license info
+    # print title
+    echo -e "${BLUE}portupdate: ${WHITE}$(date) [Copyright 2011 Derek Ashley Thomas]${NC}"
 
-  ## check if sudo
-  id=$(id -u)
-  if [ $id -ne 0 ] ; then
-      ! echo -e "${ERROR_RED}*** Must run as root; try \"sudo portupdate\"${NC}"
-      exit
-  fi 
+    ## check if sudo
+    id=$(id -u)
+    if [ $id -ne 0 ] ; then
+        ! echo -e "${ERROR_RED}*** Must run as root; try \"sudo portupdate\"${NC}"
+        exit
+    fi 
 
 
-  selfupdate && updateOld && installNew
-  #updateOld && installNew
-  #updateOld
-  #installNew
+    selfupdate && updateOld && installNew
+    #updateOld && installNew
+    #updateOld
+    #installNew
 
-  err=$?
-  echo "err: $err"
+    err=$?
+    echo "err: $err"
 
-  if [[ $err -eq 0 ]] ; then
-    #finished without errors
-    changeTitle 'Done!'
-    date +%s > ${updateFile}.exit
-  else
-    # an error occured during execution
-    changeTitle 'Error?! ('$err')'
-  fi
-  echo ""
-  read -p $(printf "${GREEN_BRIGHT}")"Press any key to continue... " -n1 -s
+    if [[ $err -eq 0 ]] ; then
+        #finished without errors
+        changeTitle 'Done!'
+        date +%s > ${update_file}.exit
 
-} | tee ${updateFile}
+        # save the ports list for syncing
+        port installed active | sed '1d' | awk '{ print $1,$2}' | tr '[:upper:]' '[:lower:]' > $LOGS_DIR/port
+    else
+        # an error occured during execution
+        changeTitle 'Error?! ('$err')'
+    fi
+    echo ""
+    read -p $(printf "${GREEN_BRIGHT}")"Press any key to continue... " -n1 -s
+
+} | tee ${update_file}
 
 # exit with error code
 exit $err
